@@ -151,11 +151,9 @@ history = model.fit(
 
 
 # Save the model in the native Keras format
-model.save("./model.keras")
-
+model.save("./CNN_optAdam_lr0.001_bs32.keras")
 
 # Load the model from the correct path
-loaded_model = models.load_model("./model.keras")
-
+loaded_model = models.load_model("./CNN_optAdam_lr0.001_bs32.keras")
 
 # Sủ dụng CNN - Deep learning
