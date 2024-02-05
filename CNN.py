@@ -13,7 +13,7 @@ from tensorflow.keras.callbacks import Callback
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 NUM_CLASSES = 8
-EPOCHS = 10
+EPOCHS = 50
 # Giả sử đây là các siêu tham số bạn muốn bao gồm
 algorithm_name = "CNN"
 optimizer = "Adam"
