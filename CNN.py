@@ -6,7 +6,14 @@ import pandas as pd
 import datetime
 import tensorflow as tf
 import pandas as pd
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import (
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix,
+    classification_report,
+)
+
 from tensorflow.keras.callbacks import Callback
 
 # Định nghĩa các thông số cần thiết
@@ -39,12 +46,18 @@ class DetailedLoggingCallback(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
+
         y_pred = np.argmax(self.model.predict(self.valid_data), axis=1)
         y_true = self.valid_data.classes
+        cm = confusion_matrix(y_true, y_pred)
+        report = classification_report(y_true, y_pred, digits=5, output_dict=True)
         precision = precision_score(y_true, y_pred, average="macro")
         recall = recall_score(y_true, y_pred, average="macro")
         f1 = f1_score(y_true, y_pred, average="macro")
-
+        print("Confusion Matrix:")
+        print(cm)
+        print("Classification Report:")
+        print(report)
         # Lưu thông tin vào list tạm thời với các giá trị được phân cách bằng tab
         self.epoch_logs.append(
             (
