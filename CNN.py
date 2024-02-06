@@ -41,7 +41,8 @@ class DetailedLoggingCallback(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
-
+        test_results = self.model.evaluate(self.test_data, verbose=0)
+        test_loss, test_accuracy = test_results[0], test_results[1]
         y_pred_valid = np.argmax(self.model.predict(self.valid_data), axis=1)
         y_true_valid = self.valid_data.classes
         cm_valid = confusion_matrix(y_true_valid, y_pred_valid)
@@ -83,7 +84,7 @@ class DetailedLoggingCallback(Callback):
                 epoch + 1,
                 logs.get("loss", 0),
                 logs.get("val_loss", 0),
-                logs.get("test_loss", 0),
+                test_loss,
                 logs.get("val_accuracy", 0),
                 precision_valid,
                 recall_valid,
