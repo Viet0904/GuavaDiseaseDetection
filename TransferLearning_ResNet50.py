@@ -116,7 +116,7 @@ class DetailedLoggingCallback(Callback):
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 NUM_CLASSES = 8
-EPOCHS = 50
+EPOCHS = 100
 # Create paths to data directories
 train_dir = "./images_segmentation/train"
 valid_dir = "./images_segmentation/valid"
