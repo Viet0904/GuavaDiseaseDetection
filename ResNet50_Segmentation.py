@@ -24,7 +24,7 @@ from sklearn.metrics import (
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 NUM_CLASSES = 8
-EPOCHS = 1
+EPOCHS = 100
 
 current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
