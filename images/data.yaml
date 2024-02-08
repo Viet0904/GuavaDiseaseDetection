@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 8
+names: ['Canker', 'Dot', 'Healthy', 'Mummification', 'Phytopthora', 'Rust', 'Scab', 'Styler_Root']
+
+roboflow:
+  workspace: guava
+  project: guava_disease_segmentation
+  version: 4
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/guava/guava_disease_segmentation/dataset/4
