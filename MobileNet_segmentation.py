@@ -1,9 +1,13 @@
 import tensorflow as tf
+from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
+from tensorflow.keras.optimizers import Adam
+import numpy as np
 import os
 import datetime
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import numpy as np
+from tensorflow.keras.callbacks import Callback
 from sklearn.metrics import (
     precision_score,
     recall_score,
@@ -13,7 +17,6 @@ from sklearn.metrics import (
     matthews_corrcoef,
     cohen_kappa_score,
 )
-from tensorflow.keras.callbacks import Callback
 
 # Define necessary parameters
 IMG_SIZE = (224, 224)
@@ -26,7 +29,10 @@ current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 class DetailedLoggingCallback(Callback):
     def __init__(
-        self, valid_data, test_data, file_prefix="CNN_segmentation_optAdam_lr0.001_bs32"
+        self,
+        valid_data,
+        test_data,
+        file_prefix="MobileNet_segmentation_optAdam_lr0.001_bs32",
     ):
         super(DetailedLoggingCallback, self).__init__()
         self.valid_data = valid_data
@@ -156,64 +162,64 @@ def create_dataset(img_dir, label_dir):
 
 
 # Tạo datasets
-train_dataset = create_dataset("./images/train/images", "./images/train/labels")
-train_dataset = train_dataset.shuffle(1000).batch(32)
+train_data = create_dataset("./images/train/images", "./images/train/labels")
+train_data = train_data.shuffle(1000).batch(32)
 
-test_dataset = create_dataset("./images/test/images", "./images/test/labels")
-test_dataset = test_dataset.batch(32)
+test_data = create_dataset("./images/test/images", "./images/test/labels")
+test_data = test_data.batch(32)
 
-valid_dataset = create_dataset("./images/valid/images", "./images/valid/labels")
-valid_dataset = valid_dataset.batch(32)
+valid_data = create_dataset("./images/valid/images", "./images/valid/labels")
+valid_data = valid_data.batch(32)
 
+# Load the MobileNet model pre-trained weights
+base_model = MobileNet(
+    weights="imagenet", include_top=False, input_shape=(*IMG_SIZE, 3)
+)
+
+
+# Freeze the layers of the base model
+for layer in base_model.layers:
+    layer.trainable = False
+
+# Add custom layers on top of the base model
 model = models.Sequential(
     [
-        layers.Conv2D(32, (3, 3), input_shape=(224, 224, 3)),
-        layers.BatchNormalization(),
-        layers.Activation("relu"),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(64, (3, 3)),
-        layers.BatchNormalization(),
-        layers.Activation("relu"),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(128, (3, 3)),
-        layers.BatchNormalization(),
-        layers.Activation("relu"),
-        layers.MaxPooling2D((2, 2)),
-        layers.Flatten(),
-        layers.Dense(512),
-        layers.BatchNormalization(),
-        layers.Activation("relu"),
+        base_model,
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(1024, activation="relu"),
         layers.Dropout(0.5),
         layers.Dense(NUM_CLASSES, activation="softmax"),
     ]
 )
 
+# Compile the model
 model.compile(
-    optimizer="adam",
+    optimizer=Adam(lr=0.001),
     loss="categorical_crossentropy",
     metrics=["accuracy", tf.keras.metrics.Precision(), tf.keras.metrics.Recall()],
 )
 
 
 detailed_logging_callback = DetailedLoggingCallback(
-    valid_data=valid_dataset, test_data=test_dataset
+    valid_data=valid_data, test_data=test_data
 )
+# Train the model
 history = model.fit(
-    train_dataset,
-    validation_data=valid_dataset,
-    epochs=EPOCHS,
+    train_data,
+    epochs=EPOCHS,  # Adjust epochs based on your needs
+    validation_data=valid_data,
     verbose=1,
     callbacks=[detailed_logging_callback],
 )
 
 # Save the model in the native Keras format
-model.save("./CNN_segmentation_optAdam_lr0.001_bs32.keras")
+model.save("./MobileNet_segmentation_optAdam_lr0.001_bs32.keras")
 
 # Load the model from the correct path
-loaded_model = models.load_model("./CNN_segmentation_optAdam_lr0.001_bs32.keras")
-test_results = loaded_model.evaluate(test_dataset)
+loaded_model = models.load_model("./MobileNet_segmentation_optAdam_lr0.001_bs32.keras")
+test_results = loaded_model.evaluate(test_data)
 test_loss, test_accuracy = test_results[0], test_results[1]
-valid_results = loaded_model.evaluate(valid_dataset)
+valid_results = loaded_model.evaluate(valid_data)
 valid_loss, valid_accuracy = valid_results[0], valid_results[1]
 print(f"Test accuracy: {test_accuracy}")
 print(f"Valid accuracy: {valid_accuracy}")
