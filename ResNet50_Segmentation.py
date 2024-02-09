@@ -48,9 +48,9 @@ class DetailedLoggingCallback(Callback):
             f.write(
                 "Epoch\tTrain Loss\tTrain Accuracy\tValid Loss\tValid Accuracy\tTest Loss\tTest Accuracy\tTest Precision\tTest Recall\tTest F1-Score\tTest MCC\tTest CMC\tValid Precision\tValid Recall\tValid F1-Score\tValid MCC\tValid CMC\n"
             )
-        with open(f"{self.Confusion_Matrix_path}_test.txt ", "w") as f:
+        with open(f"{self.Confusion_Matrix_path}_test.txt", "w") as f:
             f.write("Confusion Matrix Test\n")
-        with open(f"{self.Confusion_Matrix_path}_valid.txt ", "w") as f:
+        with open(f"{self.Confusion_Matrix_path}_valid.txt", "w") as f:
             f.write("Confusion Matrix Valid\n")
         with open(f"{self.report_path}_test.txt", "w") as f:
             f.write("Classification Report Test\n")
