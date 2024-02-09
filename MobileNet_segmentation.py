@@ -39,13 +39,24 @@ class DetailedLoggingCallback(Callback):
         self.test_data = test_data
         current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.detail_file_path = f"{file_prefix}_{current_time}_details.txt"
-        self.summary_file_path = f"{file_prefix}_{current_time}_summary.txt"
+        self.Confusion_Matrix_path = f"{file_prefix}_{current_time}_confusion_matrix"
+        self.report_path = f"{file_prefix}_{current_time}_report"
         # Initialize file and write header with tab as separator
         with open(self.detail_file_path, "w") as f:
             f.write(
-                "Epoch\tTrain Loss\tValid Loss\tTest Loss\tAccuracy\tPrecision\tRecall\tF1-Score\tMCC\tCMC\tTest Accuracy\tValid Accuracy\n"
+                "Epoch\tTrain Loss\tTrain Accuracy\tValid Loss\tValid Accuracy\tTest Loss\tTest Accuracy\tTest Precision\tTest Recall\tTest F1-Score\tTest MCC\tTest CMC\tValid Precision\tValid Recall\tValid F1-Score\tValid MCC\tValid CMC\n"
             )
+        with open(f"{self.Confusion_Matrix_path}_test.txt ", "w") as f:
+            f.write("Confusion Matrix Test\n")
+        with open(f"{self.Confusion_Matrix_path}_valid.txt ", "w") as f:
+            f.write("Confusion Matrix Valid\n")
+        with open(f"{self.report_path}_test.txt", "w") as f:
+            f.write("Classification Report Test\n")
+        with open(f"{self.report_path}_valid.txt", "w") as f:
+            f.write("Classification Report Valid\n")
         self.epoch_logs = []
+        self.epoch_cm_logs = []
+        self.epoch_report = []
 
     def extract_labels(self, dataset):
         all_labels = []
@@ -70,7 +81,6 @@ class DetailedLoggingCallback(Callback):
         f1_valid = f1_score(y_true_valid, y_pred_valid, average="macro")
         mcc_valid = matthews_corrcoef(y_true_valid, y_pred_valid)
         cmc_valid = cohen_kappa_score(y_true_valid, y_pred_valid)
-        valid_accuracy = logs.get("val_accuracy", 0)
 
         # Dự đoán nhãn cho dữ liệu test
         y_pred_test_probs = self.model.predict(self.test_data)
@@ -96,22 +106,29 @@ class DetailedLoggingCallback(Callback):
         print(cm_test)
         print("Classification Report (Test):")
         print(report_test)
-
+        # Lưu confusion matrix và classification report vào file tương ứng
+        self.epoch_cm_logs.append((epoch + 1, cm_test, cm_valid))
+        self.epoch_report.append((epoch + 1, report_test, report_valid))
         # Save information to temporary list with values separated by tab
         self.epoch_logs.append(
             (
                 epoch + 1,
                 logs.get("loss", 0),
+                logs.get("accuracy", 0),
                 logs.get("val_loss", 0),
-                test_loss,
                 logs.get("val_accuracy", 0),
+                test_loss,
+                test_accuracy,
                 precision_test,
                 recall_test,
                 f1_test,
                 mcc_test,
                 cmc_test,
-                test_accuracy,
-                valid_accuracy,
+                precision_valid,
+                recall_valid,
+                f1_valid,
+                mcc_valid,
+                cmc_valid,
             )
         )
 
@@ -120,18 +137,20 @@ class DetailedLoggingCallback(Callback):
         with open(self.detail_file_path, "a") as f:
             for log in self.epoch_logs:
                 f.write(
-                    f"{log[0]}\t{log[1]:.5f}\t{log[2]:.5f}\t{log[3]:.5f}\t{log[4]:.5f}\t{log[5]:.5f}\t{log[6]:.5f}\t{log[7]:.5f}\t{log[8]:.5f}\t{log[9]:.5f}\t{log[10]:.5f}\t{log[11]:.5f}\n"
+                    f"{log[0]}\t{log[1]:.5f}\t{log[2]:.5f}\t{log[3]:.5f}\t{log[4]:.5f}\t{log[5]:.5f}\t{log[6]:.5f}\t{log[7]:.5f}\t{log[8]:.5f}\t{log[9]:.5f}\t{log[10]:.5f}\t{log[11]:.5f}\t{log[12]:.5f}\t{log[13]:.5f}\t{log[14]:.5f}\t{log[15]:.5f}\t{log[16]:.5f}\n"
                 )
-        # Calculate summary information
-        avg_logs = np.mean(np.array(self.epoch_logs), axis=0)[
-            1:
-        ]  # Exclude epoch column
-        # Write summary file
-        with open(self.summary_file_path, "w") as f:
-            f.write(
-                "Average Train Loss\tAverage Valid Loss\tAverage Test Loss\tAverage Accuracy\tAverage Precision\tAverage Recall\tAverage F1-Score\tAverage MCC\tAverage CMC\tAverage Test Accuracy\tAverage Valid Accuracy\n"
-            )
-            f.write("\t".join([f"{avg:.5f}" for avg in avg_logs]))
+        with open(f"{self.Confusion_Matrix_path}_test.txt", "a") as f:
+            for log in self.epoch_cm_logs:
+                f.write(f"{log[1]}\n\n")
+        with open(f"{self.Confusion_Matrix_path}_valid.txt", "a") as f:
+            for log in self.epoch_cm_logs:
+                f.write(f"{log[2]}\n\n")
+        with open(f"{self.report_path}_test.txt", "a") as f:
+            for log in self.epoch_report:
+                f.write(f"{log[1]}\n\n")
+        with open(f"{self.report_path}_valid.txt", "a") as f:
+            for log in self.epoch_report:
+                f.write(f"{log[2]}\n\n")
 
 
 def load_and_preprocess_image(img_path, label_path):
@@ -213,21 +232,9 @@ history = model.fit(
 )
 
 # Save the model in the native Keras format
-model.save("./MobileNet_segmentation_optAdam_lr0.001_bs32.keras")
+model.save(f"./MobileNet_segmentation_optAdam_lr0.001_bs32_{current_time}.keras")
 
 # Load the model from the correct path
-loaded_model = models.load_model("./MobileNet_segmentation_optAdam_lr0.001_bs32.keras")
-test_results = loaded_model.evaluate(test_data)
-test_loss, test_accuracy = test_results[0], test_results[1]
-valid_results = loaded_model.evaluate(valid_data)
-valid_loss, valid_accuracy = valid_results[0], valid_results[1]
-print(f"Test accuracy: {test_accuracy}")
-print(f"Valid accuracy: {valid_accuracy}")
-print(f"Test loss: {test_loss}")
-print(f"Valid loss: {valid_loss}")
-results_file_path = "./evaluation_results.txt"
-with open(results_file_path, "w") as file:
-    file.write(f"Test accuracy: {test_accuracy}\n")
-    file.write(f"Valid accuracy: {valid_accuracy}\n")
-    file.write(f"Test loss: {test_loss}\n")
-    file.write(f"Valid loss: {valid_loss}")
+loaded_model = models.load_model(
+    f"./MobileNet_segmentation_optAdam_lr0.001_bs32_{current_time}.keras"
+)
