@@ -232,9 +232,9 @@ history = model.fit(
 )
 
 # Save the model in the native Keras format
-model.save(f"./MobileNet_segmentation_optAdam_lr0.001_bs32_{current_time}.keras")
+model.save(f"./MobileNet_segmentation_optAdam_lr0.001_bs32_{current_time}.h5")
 
 # Load the model from the correct path
 loaded_model = models.load_model(
-    f"./MobileNet_segmentation_optAdam_lr0.001_bs32_{current_time}.keras"
+    f"./MobileNet_segmentation_optAdam_lr0.001_bs32_{current_time}.h5"
 )

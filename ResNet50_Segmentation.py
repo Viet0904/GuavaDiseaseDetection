@@ -226,9 +226,9 @@ history = model.fit(
     verbose=1,
     callbacks=[detailed_logging_callback],
 )
-model.save(f"./resnet50_segmentation_{current_time}.keras")
+model.save(f"./resnet50_segmentation_{current_time}.h5")
 
-loaded_model = load_model(f"./resnet50_segmentation_{current_time}.keras")
+loaded_model = load_model(f"./resnet50_segmentation_{current_time}.h5")
 
 
 # sử dụng ResNet50
